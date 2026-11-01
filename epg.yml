@@ -1,1 +1,35 @@
+name: Genera EPG
+
+on:
+  schedule:
+    - cron: '0 3 * * *'   # ogni giorno alle 03:00 UTC
+  workflow_dispatch:       # permette anche l'avvio manuale
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: curl, mbstring
+
+      - name: Genera epg.xml
+        env:
+          PORTAL_URL: ${{ secrets.PORTAL_URL }}
+          MAC_ADDRESS: ${{ secrets.MAC_ADDRESS }}
+          EPG_PERIOD: '48'
+        run: php epg.php
+
+      - name: Salva epg.xml nel repository
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add epg.xml
+          git diff --cached --quiet || (git commit -m "Aggiorna EPG" && git push)
 
